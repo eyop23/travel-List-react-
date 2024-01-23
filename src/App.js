@@ -1,15 +1,12 @@
 import { useState } from "react";
 
-const initialItems = [
-  { id: 1, description: "Passports", quantity: 2, packed: true },
-  { id: 2, description: "Socks", quantity: 12, packed: false },
-  { id: 3, description: "food", quantity: 12, packed: true },
-];
-
 export default function App() {
   const [items, setItems] = useState([]);
   function handleDeleteItmes(id) {
     setItems((items) => items.filter((items) => items.id !== id));
+  }
+  function handleClear() {
+    setItems([]);
   }
   function onToggleItem(id) {
     setItems((items) =>
@@ -28,9 +25,10 @@ export default function App() {
       <PackingList
         onDeleteItmes={handleDeleteItmes}
         onToggleItem={onToggleItem}
+        onClearItems={handleClear}
         items={items}
       />
-      <Stats />
+      <Stats items={items} />
     </div>
   );
 }
@@ -40,7 +38,6 @@ function Logo() {
 function Form({ onAddItems }) {
   const [description, setDescription] = useState("");
   const [quantity, setQuantity] = useState(1);
-  // const [newItems, setNewItems] = useState({});
 
   function handlerForm(e) {
     e.preventDefault();
@@ -49,8 +46,6 @@ function Form({ onAddItems }) {
     onAddItems(newItems);
     setDescription("");
     setQuantity(1);
-    // const [id, description] = e.target.value;
-    // initialItems.push(newItems);
   }
   return (
     <form className="add-form" onSubmit={handlerForm}>
@@ -68,17 +63,24 @@ function Form({ onAddItems }) {
         value={description}
         onChange={(e) => setDescription(e.target.value)}
       />
-      {/* <input type="range" placeholder="range..." /> */}
       <button className="button">ADD</button>
     </form>
   );
 }
-function PackingList({ items, onDeleteItmes, onToggleItem }) {
-  // console.log(newItems);
+function PackingList({ items, onDeleteItmes, onToggleItem, onClearItems }) {
+  const [sortBy, setSort] = useState("input");
+  let sortedItem;
+  if (sortBy === "input") sortedItem = items;
+  if (sortBy === "description")
+    sortedItem = items
+      .slice()
+      .sort((a, b) => a.description.localeCompare(b.description));
+  if (sortBy === "packed")
+    sortedItem = items.slice().sort((a, b) => +a.packed - +b.packed);
   return (
     <div className="list">
       <ul>
-        {items.map((item) => (
+        {sortedItem.map((item) => (
           <Item
             item={item}
             onDeleteItmes={onDeleteItmes}
@@ -87,6 +89,14 @@ function PackingList({ items, onDeleteItmes, onToggleItem }) {
           />
         ))}
       </ul>
+      <div className="action">
+        <select value={sortBy} onChange={(e) => setSort(e.target.value)}>
+          <option value="input">Sort By Input</option>
+          <option value="description">Sort By Description</option>
+          <option value="packed">Sort By Packed</option>
+        </select>
+        <button onClick={onClearItems}>Clear List</button>
+      </div>
     </div>
   );
 }
@@ -102,14 +112,22 @@ function Item({ item, onDeleteItmes, onToggleItem }) {
         {item.quantity} {item.description}
       </span>
       <button onClick={() => onDeleteItmes(item.id)}>❌</button>
-      {/* <button>sdjkfnd</button> */}
     </li>
   );
 }
-function Stats() {
+function Stats({ items }) {
+  const packed = items.filter((item) => item.packed).length;
+  if (!items.length)
+    return (
+      <p className="stats">Start adding some items to your packing list</p>
+    );
+
   return (
     <footer className="stats">
-      <em>hey footer</em>
+      <em>
+        You have {items.length} items on your list,and you already packed{" "}
+        {packed}
+      </em>
     </footer>
   );
 }
